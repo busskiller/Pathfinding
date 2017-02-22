@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -20,6 +20,20 @@ public class Pathfinding : MonoBehaviour
 
     void Update()
     {
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit))
+            {
+                Vector3 point = hit.point;
+                TargetNode.transform.position = point;
+            }
+
+        }
+
         FindPath(StartNode.position, TargetNode.position);
     }
 
@@ -28,6 +42,15 @@ public class Pathfinding : MonoBehaviour
     {
         Node startNode = grid.NodeFromWorldPoint(startPos);
         Node targetNode = grid.NodeFromWorldPoint(targetPos);
+
+        for (int x = 0; x < grid.gridSizeX; x++)
+        {
+            for (int y = 0; y < grid.gridSizeY; y++)
+            {
+                grid.grid[x, y].gCost = grid.grid[x, y].OGcost;
+            }
+        }
+
 
         List<Node> openSet = new List<Node>();
         HashSet<Node> closedSet = new HashSet<Node>();
@@ -39,11 +62,11 @@ public class Pathfinding : MonoBehaviour
 
             Node currentNode = openSet[0];
 
-            for (int i = 0; i < openSet.Count ; i++)
+            for (int i = 0; i < openSet.Count; i++)
             {
 
                 if (openSet[i].fCost < currentNode.fCost ||
-                    openSet[i].fCost == currentNode.fCost && openSet[i].hCost < currentNode.hCost)
+                    (openSet[i].fCost == currentNode.fCost && openSet[i].hCost < currentNode.hCost))
                 {
                     currentNode = openSet[i];
                 }
@@ -62,24 +85,22 @@ public class Pathfinding : MonoBehaviour
 
             foreach (Node neighbour in grid.GetNeighbours(currentNode))
             {
-                if (!neighbour.walkable || closedSet.Contains(neighbour))
+
+                //int newMovementCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour);
+
+
+                //int newMovementCostToNeighbour = currentNode  neighbour.gCost + GetDistance(targetNode, neighbour);
+
+                if (!openSet.Contains(neighbour) && !closedSet.Contains(neighbour))
                 {
-                    continue;
-                }
+                    neighbour.gCost = currentNode.gCost + neighbour.gCost;
+                    neighbour.fCost = neighbour.gCost + GetDistance(targetNode, neighbour);
+                    openSet.Add(neighbour);
 
 
-                int newMovementCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour);
-
-                if (newMovementCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
-                {
-                    neighbour.gCost = newMovementCostToNeighbour;
-                    neighbour.hCost = GetDistance(neighbour, targetNode);
+                    //neighbour.hCost = GetDistance(neighbour, targetNode);
                     neighbour.parent = currentNode;
 
-                    if (!openSet.Contains(neighbour))
-                    {
-                        openSet.Add(neighbour);
-                    }
                 }
 
             }
@@ -91,7 +112,7 @@ public class Pathfinding : MonoBehaviour
     }
 
 
-    private void DrawPath (Node startNode, Node endNode)
+    private void DrawPath(Node startNode, Node endNode)
     {
         List<Node> path = new List<Node>();
         Node currentNode = endNode;
@@ -101,6 +122,17 @@ public class Pathfinding : MonoBehaviour
             path.Add(currentNode);
             currentNode = currentNode.parent;
         }
+        for (int i = 0; i < path.Count; i++)
+        {
+
+            Vector3 tmp = new Vector3(1, 1, -1);
+            tmp.x = path[i].worldPosition.x;
+            tmp.y = path[i].worldPosition.y;
+
+            StartNode.transform.position = tmp;
+
+        }
+
         path.Reverse();
 
         grid.Path = path;
@@ -116,7 +148,7 @@ public class Pathfinding : MonoBehaviour
 
         if (dstX > dstY)
         {
-            return 14*dstY + 10*(dstX - dstY);
+            return 14 * dstY + 10 * (dstX - dstY);
         }
         return 14 * dstX + 10 * (dstY - dstX);
     }

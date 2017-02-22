@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -11,34 +11,36 @@ public class Grid : MonoBehaviour
     public Vector2 gridWorldSize;
     public float nodeRadius;
 
-    private Node[,] grid;
+    public Node[,] grid;
     private float nodeDiameter;
-    private int gridSizeX, gridSizeY;
+    public int gridSizeX, gridSizeY;
 
     void Start()
     {
-        nodeDiameter = nodeRadius*2;
-        gridSizeX = Mathf.RoundToInt(gridWorldSize.x/nodeDiameter);
-        gridSizeY = Mathf.RoundToInt(gridWorldSize.y/nodeDiameter);
+        nodeDiameter = nodeRadius * 2;
+        gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
+        gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
         CreateGrid();
     }
 
 
     void CreateGrid()
     {
-        grid = new Node[gridSizeX,gridSizeY];
-        Vector3 worldBottomLeft = transform.position - Vector3.right*gridWorldSize.x/2 - Vector3.up*gridWorldSize.y/2;
+        grid = new Node[gridSizeX, gridSizeY];
+        Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.up * gridWorldSize.y / 2;
 
         for (int x = 0; x < gridSizeX; x++)
         {
             for (int y = 0; y < gridSizeX; y++)
             {
-                Vector3 worldPoint = worldBottomLeft + Vector3.right*(x*nodeDiameter + nodeRadius) +
-                                     Vector3.up*(y*nodeDiameter + nodeRadius);
+                Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) +
+                                     Vector3.up * (y * nodeDiameter + nodeRadius);
 
                 //If the is a collision, set walkable to false
                 bool walkable = !(Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask));
-                grid [x,y] = new Node(walkable, worldPoint, x, y);
+                grid[x, y] = new Node(walkable, worldPoint, x, y);
+                grid[x, y].nodeInitialization();
+
             }
         }
     }
@@ -53,7 +55,24 @@ public class Grid : MonoBehaviour
 
             foreach (Node n in grid)
             {
-                Gizmos.color = (n.walkable) ? Color.white : Color.red;
+
+                if (n.gCost == 1) {
+                    Gizmos.color = Color.green;
+                }
+                if (n.gCost == 2)
+                {
+                    Gizmos.color = new Color(0, .75f, 0);
+                }
+                if (n.gCost == 3)
+                {
+                    Gizmos.color = Color.yellow;
+                }
+                if (n.gCost == 4)
+                {
+                    Gizmos.color = Color.red;
+                }
+
+                //Gizmos.color = (n.walkable) ? Color.white : Color.red;
 
                 if (Path != null)
                 {
@@ -68,8 +87,8 @@ public class Grid : MonoBehaviour
                     //Gizmos.color = Color.green;
                 }
 
-                Gizmos.DrawCube(n.worldPosition, Vector3.one * (nodeDiameter -.1f));
-                
+                Gizmos.DrawCube(n.worldPosition, Vector3.one * (nodeDiameter - .1f));
+
             }
         }
 
@@ -78,13 +97,13 @@ public class Grid : MonoBehaviour
     public Node NodeFromWorldPoint(Vector3 worldPosition)
     {
 
-        float percentX = Mathf.Clamp01((worldPosition.x + gridWorldSize.x / 2 ) / gridWorldSize.x);
+        float percentX = Mathf.Clamp01((worldPosition.x + gridWorldSize.x / 2) / gridWorldSize.x);
         float percentY = Mathf.Clamp01((worldPosition.y + gridWorldSize.y / 2) / gridWorldSize.y);
 
-        int x = Mathf.RoundToInt( (gridSizeX - 1) * percentX );
-        int y = Mathf.RoundToInt( (gridSizeY - 1) * percentY);
+        int x = Mathf.RoundToInt((gridSizeX - 1) * percentX);
+        int y = Mathf.RoundToInt((gridSizeY - 1) * percentY);
 
-        return grid [x,y];
+        return grid[x, y];
     }
 
     public List<Node> GetNeighbours(Node node)
@@ -106,7 +125,7 @@ public class Grid : MonoBehaviour
                 if (checkX >= 0 && checkX < gridSizeX &&
                     checkY >= 0 && checkY < gridSizeY)
                 {
-                    neighbours.Add(grid[checkX,checkY]);
+                    neighbours.Add(grid[checkX, checkY]);
                 }
 
             }
