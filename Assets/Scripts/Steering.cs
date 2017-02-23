@@ -86,6 +86,7 @@ public class Steering : MonoBehaviour {
 
         //We cap the movement vector at moveSpeed, to avoid unnaturally fast Friendliess
         moveDir = moveDir.normalized * moveSpeed;
+        moveDir.z = -1;
 
         //Time.fixedDeltaTime is multiplied with the movement to make the movement frame dependant
         //Tis means  that cases with higher frame rate won't experience faster agents.
@@ -97,7 +98,7 @@ public class Steering : MonoBehaviour {
         }
 
         //Safety to ensure that they don't leave earth, this is needed due to small calculation-mistakes' tendency to add up.
-        transform.position = new Vector3(transform.position.x, transform.position.y, 0 );
+        transform.position = new Vector3(transform.position.x, transform.position.y, -2 );
     }
 
 }

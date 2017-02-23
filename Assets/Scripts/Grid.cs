@@ -47,7 +47,10 @@ public class Grid : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, gridWorldSize.y, 1));
+        Vector3 tmp = transform.position;
+        tmp.z = -10;
+
+        Gizmos.DrawWireCube(tmp, new Vector3(gridWorldSize.x, gridWorldSize.y, 0));
 
         if (grid != null)
         {
@@ -56,18 +59,18 @@ public class Grid : MonoBehaviour
             foreach (Node n in grid)
             {
 
-                if (n.gCost == 1) {
+                if (n.OriginalGcost == 1) {
                     Gizmos.color = Color.green;
                 }
-                if (n.gCost == 2)
+                if (n.OriginalGcost == 2)
                 {
                     Gizmos.color = new Color(0, .75f, 0);
                 }
-                if (n.gCost == 3)
+                if (n.OriginalGcost == 3)
                 {
                     Gizmos.color = Color.yellow;
                 }
-                if (n.gCost == 4)
+                if (n.OriginalGcost == 4)
                 {
                     Gizmos.color = Color.red;
                 }

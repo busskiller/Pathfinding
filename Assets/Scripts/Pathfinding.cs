@@ -9,6 +9,10 @@ public class Pathfinding : MonoBehaviour
     public Transform StartNode;
     public Transform TargetNode;
 
+    private Node startNode;
+    private Node targetNode;
+
+
 
     private Grid grid;
 
@@ -17,6 +21,8 @@ public class Pathfinding : MonoBehaviour
         grid = GetComponent<Grid>();
     }
 
+
+    private bool Finished = false;
 
     void Update()
     {
@@ -30,27 +36,32 @@ public class Pathfinding : MonoBehaviour
             {
                 Vector3 point = hit.point;
                 TargetNode.transform.position = point;
+                FindPath(StartNode.position, TargetNode.position);
+                StopAllCoroutines();
             }
 
         }
 
-        FindPath(StartNode.position, TargetNode.position);
+
+
+
+        if (Finished == true)
+        {
+            DrawPath(startNode, targetNode, 3);
+
+            StartCoroutine(FollowPath(1));
+
+            Finished = false;
+
+        }
+
     }
 
 
     void FindPath(Vector3 startPos, Vector3 targetPos)
     {
-        Node startNode = grid.NodeFromWorldPoint(startPos);
-        Node targetNode = grid.NodeFromWorldPoint(targetPos);
-
-        for (int x = 0; x < grid.gridSizeX; x++)
-        {
-            for (int y = 0; y < grid.gridSizeY; y++)
-            {
-                grid.grid[x, y].gCost = grid.grid[x, y].OGcost;
-            }
-        }
-
+        startNode = grid.NodeFromWorldPoint(startPos);
+        targetNode = grid.NodeFromWorldPoint(targetPos);
 
         List<Node> openSet = new List<Node>();
         HashSet<Node> closedSet = new HashSet<Node>();
@@ -64,7 +75,6 @@ public class Pathfinding : MonoBehaviour
 
             for (int i = 0; i < openSet.Count; i++)
             {
-
                 if (openSet[i].fCost < currentNode.fCost ||
                     (openSet[i].fCost == currentNode.fCost && openSet[i].hCost < currentNode.hCost))
                 {
@@ -78,7 +88,10 @@ public class Pathfinding : MonoBehaviour
 
             if (currentNode == targetNode)
             {
-                DrawPath(startNode, targetNode);
+
+                Finished = true;
+
+                //DrawPath(startNode, targetNode);
                 return;
             }
 
@@ -86,35 +99,94 @@ public class Pathfinding : MonoBehaviour
             foreach (Node neighbour in grid.GetNeighbours(currentNode))
             {
 
-                //int newMovementCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour);
+                int newGcostToNeighbour = currentNode.OriginalGcost + neighbour.OriginalGcost;
+                int newFcostToNeighbour = newGcostToNeighbour + neighbour.hCost;
 
-
-                //int newMovementCostToNeighbour = currentNode  neighbour.gCost + GetDistance(targetNode, neighbour);
 
                 if (!openSet.Contains(neighbour) && !closedSet.Contains(neighbour))
                 {
-                    neighbour.gCost = currentNode.gCost + neighbour.gCost;
-                    neighbour.fCost = neighbour.gCost + GetDistance(targetNode, neighbour);
+                    neighbour.gCost = newGcostToNeighbour;
+                    neighbour.hCost = GetDistance(neighbour, targetNode);
+                    neighbour.fCost = newGcostToNeighbour + neighbour.hCost;
+
                     openSet.Add(neighbour);
 
-
-                    //neighbour.hCost = GetDistance(neighbour, targetNode);
                     neighbour.parent = currentNode;
+                }
+                else if (openSet.Contains(neighbour) && !closedSet.Contains(neighbour))
+                {
+
+                    if (neighbour.fCost < newFcostToNeighbour)
+                    {
+                        neighbour.gCost = newGcostToNeighbour;
+                        neighbour.fCost = newFcostToNeighbour;
+
+                        neighbour.parent = null;
+
+                        neighbour.parent = currentNode;
+
+                    }
 
                 }
 
             }
 
-
         }
-
 
     }
 
 
-    private void DrawPath(Node startNode, Node endNode)
+    private List<Node> path;
+
+
+    private IEnumerator FollowPath(int delay)
     {
-        List<Node> path = new List<Node>();
+        for (int i = 0; i < path.Count; i++)
+        {
+            Vector3 tmp = new Vector3(1, 1, -1);
+            Vector3 startPos = StartNode.transform.position;
+
+            tmp.x = path[i].worldPosition.x;
+            tmp.y = path[i].worldPosition.y;
+
+            //float step = delay * Time.deltaTime;
+
+            float t = 0;
+
+            while (t < delay)
+            {
+                t += Time.deltaTime;
+                StartNode.transform.position = Vector3.Lerp(startPos, tmp, t);
+                yield return null;
+
+                //print("Stage 2");
+            }
+
+
+            //print(path[i].worldPosition);
+
+            //StartNode.transform.position = tmp;
+
+            //yield return new WaitUntil(() => tmp == StartNode.transform.position);
+
+            //float step = delay * Time.deltaTime;
+            //StartNode.transform.position = Vector3.MoveTowards(transform.position, tmp, 1);
+
+            //yield return new WaitForSeconds(t);
+        }
+    }
+
+
+    private void DrawPath(Node startNode, Node endNode, int delay)
+    {
+        path = null;
+
+        if (path != null)
+        {
+            Debug.Log("not empty");
+        }
+
+        path = new List<Node>();
         Node currentNode = endNode;
 
         while (currentNode != startNode)
@@ -122,35 +194,15 @@ public class Pathfinding : MonoBehaviour
             path.Add(currentNode);
             currentNode = currentNode.parent;
         }
-        for (int i = 0; i < path.Count; i++)
-        {
-
-            Vector3 tmp = new Vector3(1, 1, -1);
-            tmp.x = path[i].worldPosition.x;
-            tmp.y = path[i].worldPosition.y;
-
-            StartNode.transform.position = tmp;
-
-        }
-
         path.Reverse();
 
         grid.Path = path;
     }
 
 
-
-    //14 min. in video. Dont quite get it.
     private int GetDistance(Node nodeA, Node nodeB)
     {
-        int dstX = Mathf.Abs(nodeA.gridX - nodeB.gridX);
-        int dstY = Mathf.Abs(nodeA.gridY - nodeB.gridY);
-
-        if (dstX > dstY)
-        {
-            return 14 * dstY + 10 * (dstX - dstY);
-        }
-        return 14 * dstX + 10 * (dstY - dstX);
+        return Mathf.Abs(nodeA.gridX - nodeB.gridX) + Mathf.Abs(nodeA.gridY - nodeB.gridY);
     }
 
 

@@ -12,17 +12,17 @@ public class Node
     public int gridY;
 
 
-    public int gCost; //distance to start node
-    public int hCost; //distance to target node
+    public int gCost; //My own cost that i specify
+    public int hCost; //distance from node to the target node
 
-    public int fCost;
-    public int OGcost;
+    public int fCost; //the total cost i.e. hCost+gCost of the node
+    public int OriginalGcost; //Stores the orignal gCost
 
     public void nodeInitialization() {
 
         gCost = (int)Random.Range(1, 5);
-        Debug.Log(gCost);
-        OGcost = gCost;
+        //Debug.Log(gCost);
+        OriginalGcost = gCost;
     }
 
 
